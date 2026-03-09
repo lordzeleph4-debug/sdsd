@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>look - Recherche Avancée</title>
+    <title>SentiNet - Recherche Avancée</title>
     <style>
         * {
             margin: 0;
@@ -496,7 +496,7 @@
     <div class="auth-screen" id="authScreen">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-logo">look</div>
+                <div class="auth-logo">SentiNet</div>
                 <div class="auth-subtitle">Access Control</div>
             </div>
             <form class="auth-form" id="authForm">
@@ -610,7 +610,6 @@
         // ===== CONFIGURATION =====
         const ACCESS_CODE = 'SECRET123'; // ⚠️ À MODIFIER EN PRODUCTION
         const SENTINET_API_KEY = 'SNT-FC3622765FF5A1941940';
-        const SENTINET_URL = 'https://sentinet.x10.mx/tunnel/reacher-api/search';
 
         // ===== AUTH SYSTEM =====
         const authScreen = document.getElementById('authScreen');
@@ -670,7 +669,7 @@
         // Fonction pour appeler l'API SentiNet
         async function searchSentiNet(searchData) {
             try {
-                // Construire les paramètres de requête
+                // Construire les paramètres de requête (SANS api_key)
                 const params = new URLSearchParams();
 
                 if (searchData.prenom) params.append('prenom', searchData.prenom);
@@ -685,32 +684,32 @@
 
                 const url = `https://sentinet.x10.mx/tunnel/reacher-api/search?${params.toString()}`;
 
-                console.log('Appel API:', url);
+                console.log('🔍 Appel API SentiNet...');
+                console.log('URL:', url);
+                console.log('API Key:', SENTINET_API_KEY);
 
-                // Appel direct avec header X-API-Key (méthode recommandée)
+                // Appel avec header X-API-Key (MÉTHODE RECOMMANDÉE)
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
-                        'X-API-Key': SENTINET_API_KEY,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    mode: 'cors'
+                        'X-API-Key': SENTINET_API_KEY
+                    }
                 });
 
-                console.log('Status:', response.status);
+                console.log('✅ Réponse reçue - Status:', response.status);
 
                 if (!response.ok) {
-                    const errorData = await response.text();
-                    console.error('API Error Details:', errorData);
-                    throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+                    const errorText = await response.text();
+                    console.error('❌ Erreur API:', response.status, errorText);
+                    throw new Error(`API Error ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
+                console.log('✅ Données reçues:', data);
                 return data;
 
             } catch (error) {
-                console.error('Search error:', error);
+                console.error('❌ Erreur recherche:', error);
                 throw error;
             }
         }
@@ -764,8 +763,9 @@
             } catch (error) {
                 searchBtn.disabled = false;
                 loadingState.classList.remove('active');
-                errorMessage.textContent = `Erreur: ${error.message}. Assurez-vous que votre clé API est valide.`;
+                errorMessage.textContent = `❌ Erreur: ${error.message}`;
                 errorMessage.classList.add('active');
+                console.error('Erreur complète:', error);
             }
         });
 
