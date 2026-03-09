@@ -609,7 +609,6 @@
     <script>
         // ===== CONFIGURATION =====
         const ACCESS_CODE = 'SECRET123'; // ⚠️ À MODIFIER EN PRODUCTION
-        const SENTINET_API_KEY = 'SNT-FC3622765FF5A1941940';
 
         // ===== AUTH SYSTEM =====
         const authScreen = document.getElementById('authScreen');
@@ -666,42 +665,25 @@
         const resultItems = document.getElementById('resultItems');
         const errorMessage = document.getElementById('errorMessage');
 
-        // Fonction pour appeler l'API SentiNet
+        // Fonction pour appeler le backend Vercel
         async function searchSentiNet(searchData) {
             try {
-                // Construire les paramètres de requête (SANS api_key)
-                const params = new URLSearchParams();
+                console.log('🔍 Appel API backend...');
 
-                if (searchData.prenom) params.append('prenom', searchData.prenom);
-                if (searchData.nom) params.append('nom', searchData.nom);
-                if (searchData.date_naissance) params.append('date_naissance', searchData.date_naissance);
-                if (searchData.telephone) params.append('telephone', searchData.telephone);
-                if (searchData.email) params.append('email', searchData.email);
-                if (searchData.ville) params.append('ville', searchData.ville);
-                if (searchData.code_postal) params.append('code_postal', searchData.code_postal);
-                if (searchData.immat) params.append('immat', searchData.immat);
-                if (searchData.vin) params.append('vin', searchData.vin);
-
-                const url = `https://sentinet.x10.mx/tunnel/reacher-api/search?${params.toString()}`;
-
-                console.log('🔍 Appel API SentiNet...');
-                console.log('URL:', url);
-                console.log('API Key:', SENTINET_API_KEY);
-
-                // Appel avec header X-API-Key (MÉTHODE RECOMMANDÉE)
-                const response = await fetch(url, {
-                    method: 'GET',
+                const response = await fetch('/api/search', {
+                    method: 'POST',
                     headers: {
-                        'X-API-Key': SENTINET_API_KEY
-                    }
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(searchData)
                 });
 
                 console.log('✅ Réponse reçue - Status:', response.status);
 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('❌ Erreur API:', response.status, errorText);
-                    throw new Error(`API Error ${response.status}: ${response.statusText}`);
+                    const errorData = await response.json();
+                    console.error('❌ Erreur API:', errorData);
+                    throw new Error(errorData.message || `API Error ${response.status}`);
                 }
 
                 const data = await response.json();
