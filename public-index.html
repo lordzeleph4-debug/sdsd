@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SentiNet - Recherche Avancée</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #000000;
+            --secondary: #ffffff;
+            --accent: #1a1a1a;
+            --border: #333333;
+            --text: #000000;
+            --bg: #ffffff;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: 'Segoe UI', Trebuchet MS, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* ===== AUTH SCREEN ===== */
+        .auth-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .auth-screen.hidden {
+            display: none;
+        }
+
+        .auth-card {
+            background: #ffffff;
+            padding: 60px 50px;
+            border-radius: 0;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .auth-logo {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+            color: #000000;
+        }
+
+        .auth-subtitle {
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #666666;
+            font-weight: 500;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 15px 16px;
+            border: 1px solid #e0e0e0;
+            background: #fafafa;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .auth-input:focus {
+            outline: none;
+            background: #ffffff;
+            border-color: #000000;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .auth-button {
+            padding: 14px 20px;
+            background: #000000;
+            color: #ffffff;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+            margin-top: 10px;
+        }
+
+        .auth-button:hover {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .auth-button:active {
+            transform: translateY(0);
+        }
+
+        .auth-error {
+            color: #c41c3b;
+            font-size: 13px;
+            text-align: center;
+            min-height: 20px;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* ===== MAIN APP ===== */
+        .app {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header {
+            padding: 30px 40px;
+            border-bottom: 1px solid #e0e0e0;
+            background: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid #000000;
+            color: #000000;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .search-panel {
+            width: 35%;
+            padding: 40px;
+            border-right: 1px solid #e0e0e0;
+            background: #ffffff;
+            overflow-y: auto;
+        }
+
+        .results-panel {
+            width: 65%;
+            padding: 40px;
+            background: #fafafa;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #666666;
+            margin-bottom: 20px;
+            margin-top: 25px;
+        }
+
+        .section-title:first-child {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            color: #333333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e0e0e0;
+            background: #fafafa;
+            font-size: 13px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: #ffffff;
+            border-color: #000000;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 13px 16px;
+            background: #000000;
+            color: #ffffff;
+            border: none;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            margin-top: 25px;
+        }
+
+        .search-btn:hover:not(:disabled) {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .search-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-container {
+            display: none;
+        }
+
+        .result-container.active {
+            display: block;
+        }
+
+        .result-stats {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 2px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 900;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999999;
+        }
+
+        .result-items {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .result-item {
+            background: #ffffff;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 2px;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .result-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .result-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-top: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+
+        .result-field:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .result-label {
+            color: #999999;
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-weight: 500;
+            color: #333333;
+        }
+
+        .empty-state {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+            color: #999999;
+        }
+
+        .empty-state.active {
+            display: block;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #e0e0e0;
+            border-top-color: #000000;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fce8e8;
+            border: 1px solid #e6d5d9;
+            color: #c41c3b;
+            padding: 15px;
+            border-radius: 2px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d0d0d0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999999;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+
+            .search-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+                max-height: 40%;
+            }
+
+            .results-panel {
+                width: 100%;
+                max-height: 60%;
+            }
+
+            .auth-card {
+                padding: 40px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- AUTH SCREEN -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">SentiNet</div>
+                <div class="auth-subtitle">Access Control</div>
+            </div>
+            <form class="auth-form" id="authForm">
+                <input 
+                    type="password" 
+                    class="auth-input" 
+                    id="authCode" 
+                    placeholder="Entrez le code d'accès"
+                    autocomplete="off"
+                >
+                <div class="auth-error" id="authError"></div>
+                <button type="submit" class="auth-button">Accéder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div class="app" id="appContainer" style="display: none;">
+        <div class="header">
+            <div class="logo">SentiNet</div>
+            <button class="logout-btn" id="logoutBtn">Déconnexion</button>
+        </div>
+
+        <div class="content">
+            <!-- SEARCH PANEL -->
+            <div class="search-panel">
+                <form id="searchForm">
+                    <div class="section-title">Informations Personnelles</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" class="form-input" id="prenom" placeholder="Jean">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-input" id="nom" placeholder="Dupont">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Date de Naissance</label>
+                        <input type="text" class="form-input" id="dateNaissance" placeholder="15/04/1985 ou 1985">
+                    </div>
+
+                    <div class="section-title">Contact</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Téléphone</label>
+                        <input type="text" class="form-input" id="telephone" placeholder="0612345678">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="email" placeholder="jean@example.com">
+                    </div>
+
+                    <div class="section-title">Localisation</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Ville</label>
+                        <input type="text" class="form-input" id="ville" placeholder="Paris">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Code Postal</label>
+                        <input type="text" class="form-input" id="codePostal" placeholder="75001">
+                    </div>
+
+                    <div class="section-title">Véhicule</div>
+
+                    <div class="form-group">
+                        <label class="form-label">Immatriculation</label>
+                        <input type="text" class="form-input" id="immat" placeholder="AB-123-CD">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">VIN</label>
+                        <input type="text" class="form-input" id="vin" placeholder="VF7XK35K...">
+                    </div>
+
+                    <button type="submit" class="search-btn" id="searchBtn">Rechercher</button>
+                </form>
+            </div>
+
+            <!-- RESULTS PANEL -->
+            <div class="results-panel">
+                <div class="error-message" id="errorMessage"></div>
+
+                <div class="empty-state active" id="emptyState">
+                    <div class="empty-icon">🔍</div>
+                    <div class="empty-text">
+                        Entrez vos critères de recherche<br>
+                        pour afficher les résultats
+                    </div>
+                </div>
+
+                <div class="loading" id="loadingState">
+                    <div class="spinner"></div>
+                    <div>Recherche en cours...</div>
+                </div>
+
+                <div class="result-container" id="resultContainer">
+                    <div class="result-stats" id="resultStats"></div>
+                    <div class="result-items" id="resultItems"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== CONFIGURATION =====
+        const ACCESS_CODE = 'SECRET123'; // ⚠️ À MODIFIER EN PRODUCTION
+
+        // ===== AUTH SYSTEM =====
+        const authScreen = document.getElementById('authScreen');
+        const authForm = document.getElementById('authForm');
+        const authCode = document.getElementById('authCode');
+        const authError = document.getElementById('authError');
+        const appContainer = document.getElementById('appContainer');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        function isAuthenticated() {
+            return sessionStorage.getItem('sentinet_auth') === 'true';
+        }
+
+        function checkAuth() {
+            if (isAuthenticated()) {
+                authScreen.classList.add('hidden');
+                appContainer.style.display = 'flex';
+            }
+        }
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            authError.textContent = '';
+
+            const code = authCode.value.trim();
+
+            if (code === ACCESS_CODE) {
+                sessionStorage.setItem('sentinet_auth', 'true');
+                authScreen.classList.add('hidden');
+                appContainer.style.display = 'flex';
+                authCode.value = '';
+            } else {
+                authError.textContent = 'Code d\'accès invalide';
+                authCode.value = '';
+                authCode.focus();
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('sentinet_auth');
+            authScreen.classList.remove('hidden');
+            appContainer.style.display = 'none';
+            authCode.value = '';
+            authCode.focus();
+        });
+
+        // ===== SEARCH SYSTEM =====
+        const searchForm = document.getElementById('searchForm');
+        const searchBtn = document.getElementById('searchBtn');
+        const emptyState = document.getElementById('emptyState');
+        const loadingState = document.getElementById('loadingState');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultStats = document.getElementById('resultStats');
+        const resultItems = document.getElementById('resultItems');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Fonction pour appeler le backend
+        async function searchSentiNet(searchData) {
+            try {
+                console.log('🔍 Appel API backend...');
+
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(searchData)
+                });
+
+                console.log('✅ Réponse reçue - Status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('❌ Erreur API:', errorData);
+                    throw new Error(errorData.message || `API Error ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Données reçues:', data);
+                return data;
+
+            } catch (error) {
+                console.error('❌ Erreur recherche:', error);
+                throw error;
+            }
+        }
+
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Récupérer les données du formulaire
+            const searchData = {
+                prenom: document.getElementById('prenom').value.trim(),
+                nom: document.getElementById('nom').value.trim(),
+                date_naissance: document.getElementById('dateNaissance').value.trim(),
+                telephone: document.getElementById('telephone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                ville: document.getElementById('ville').value.trim(),
+                code_postal: document.getElementById('codePostal').value.trim(),
+                immat: document.getElementById('immat').value.trim(),
+                vin: document.getElementById('vin').value.trim(),
+            };
+
+            // Vérifier au moins un critère
+            const hasSearchCriteria = Object.values(searchData).some(v => v !== '');
+            if (!hasSearchCriteria) {
+                errorMessage.textContent = 'Veuillez entrer au moins un critère de recherche';
+                errorMessage.classList.add('active');
+                return;
+            }
+
+            errorMessage.classList.remove('active');
+            emptyState.classList.remove('active');
+            loadingState.classList.add('active');
+            resultContainer.classList.remove('active');
+            searchBtn.disabled = true;
+
+            try {
+                const data = await searchSentiNet(searchData);
+
+                searchBtn.disabled = false;
+                loadingState.classList.remove('active');
+
+                if (!data || data.results_count === 0) {
+                    emptyState.classList.add('active');
+                    emptyState.innerHTML = `
+                        <div class="empty-icon">✗</div>
+                        <div class="empty-text">Aucun résultat trouvé</div>
+                    `;
+                } else {
+                    displayResults(data);
+                }
+
+            } catch (error) {
+                searchBtn.disabled = false;
+                loadingState.classList.remove('active');
+                errorMessage.textContent = `❌ Erreur: ${error.message}`;
+                errorMessage.classList.add('active');
+                console.error('Erreur complète:', error);
+            }
+        });
+
+        function displayResults(data) {
+            // Stats
+            resultStats.innerHTML = `
+                <div class="stat">
+                    <div class="stat-value">${data.results_count || 0}</div>
+                    <div class="stat-label">Résultats</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${data.requests_remaining || 'N/A'}</div>
+                    <div class="stat-label">Requêtes Restantes</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">${data.plan || 'N/A'}</div>
+                    <div class="stat-label">Plan</div>
+                </div>
+            `;
+
+            // Résultats
+            if (data.data && data.data.length > 0) {
+                resultItems.innerHTML = data.data.map((item, idx) => `
+                    <div class="result-item" style="animation-delay: ${idx * 0.1}s">
+                        <div class="result-name">
+                            ${item.prenom ? item.prenom + ' ' : ''}${item.nom || 'N/A'}
+                        </div>
+                        ${item.date_naissance ? `<div class="result-field"><span class="result-label">Date de Naissance</span><span class="result-value">${item.date_naissance}</span></div>` : ''}
+                        ${item.telephone ? `<div class="result-field"><span class="result-label">Téléphone</span><span class="result-value">${item.telephone}</span></div>` : ''}
+                        ${item.email ? `<div class="result-field"><span class="result-label">Email</span><span class="result-value">${item.email}</span></div>` : ''}
+                        ${item.ville ? `<div class="result-field"><span class="result-label">Ville</span><span class="result-value">${item.ville}</span></div>` : ''}
+                        ${item.code_postal ? `<div class="result-field"><span class="result-label">Code Postal</span><span class="result-value">${item.code_postal}</span></div>` : ''}
+                        ${item.adresse ? `<div class="result-field"><span class="result-label">Adresse</span><span class="result-value">${item.adresse}</span></div>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            resultContainer.classList.add('active');
+        }
+
+        // Check auth on load
+        checkAuth();
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "sentinet-app",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Application SentiNet avec authentification",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "keywords": ["sentinet", "search"],
+  "author": "",
+  "license": "MIT"
+}
