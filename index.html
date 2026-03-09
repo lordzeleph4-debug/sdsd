@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SentiNet - Recherche Avancée</title>
+    <title>look - Recherche Avancée</title>
     <style>
         * {
             margin: 0;
@@ -496,7 +496,7 @@
     <div class="auth-screen" id="authScreen">
         <div class="auth-card">
             <div class="auth-header">
-                <div class="auth-logo">SentiNet</div>
+                <div class="auth-logo">look</div>
                 <div class="auth-subtitle">Access Control</div>
             </div>
             <form class="auth-form" id="authForm">
@@ -670,9 +670,8 @@
         // Fonction pour appeler l'API SentiNet
         async function searchSentiNet(searchData) {
             try {
-                // Construire les paramètres
+                // Construire les paramètres de requête
                 const params = new URLSearchParams();
-                params.append('api_key', SENTINET_API_KEY);
 
                 if (searchData.prenom) params.append('prenom', searchData.prenom);
                 if (searchData.nom) params.append('nom', searchData.nom);
@@ -684,31 +683,27 @@
                 if (searchData.immat) params.append('immat', searchData.immat);
                 if (searchData.vin) params.append('vin', searchData.vin);
 
-                const url = `${SENTINET_URL}?${params.toString()}`;
+                const url = `https://sentinet.x10.mx/tunnel/reacher-api/search?${params.toString()}`;
 
-                // Essayer avec CORS proxy en premier
-                let response;
-                try {
-                    response = await fetch('https://cors-anywhere.herokuapp.com/' + url, {
-                        method: 'GET',
-                        headers: {
-                            'X-API-Key': SENTINET_API_KEY,
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                } catch (e) {
-                    // Si CORS proxy échoue, essayer direct
-                    response = await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'X-API-Key': SENTINET_API_KEY,
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                }
+                console.log('Appel API:', url);
+
+                // Appel direct avec header X-API-Key (méthode recommandée)
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-API-Key': SENTINET_API_KEY,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+
+                console.log('Status:', response.status);
 
                 if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
+                    const errorData = await response.text();
+                    console.error('API Error Details:', errorData);
+                    throw new Error(`API Error: ${response.status} - ${response.statusText}`);
                 }
 
                 const data = await response.json();
